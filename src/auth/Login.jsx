@@ -1,9 +1,11 @@
-import { Button, Spin } from "antd";
+import { Button, Spin, message } from "antd";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from 'axios';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -19,14 +21,12 @@ const Login = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required*";
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Enter a valid email address";
+      newErrors.email = "Please provide a valid email address";
     }
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must contain at least 8 characters";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -44,31 +44,33 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      setLoading(true);
-      setTimeout(() => {
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        if (
-          storedUser.email === formData.email &&
-          storedUser.password === formData.password
-        ) {
-          const authToken =
-            Math.random().toString(36).substring(2, 15) +
-            Math.random().toString(36).substring(2, 15);
-          localStorage.setItem("authToken", authToken);
-          navigate("/");
-        } else {
-          alert("Invalid credentials");
-        }
-      }, 2000);
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+
+      // Store token in memory (axios defaults)
+      axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      localStorage.setItem('token', response.data.token); // Store token in local storage if needed
+      message.success('Login successful!');
+      console.log(response.data.user);
+
+      navigate('/');
+
+    } catch (error) {
+      console.log(error.response.data.message);
+
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col bg-[#166d83] bg-img min-h-screen justify-center items-center">
-      <div className="border  w-[600px] bg-[#f7f7f7]  p-6 rounded-2xl shadow-2xl">
+    <div className="flex flex-col bg-[#166d83]  bg-img min-h-screen justify-center items-center">
+      <div className="border w-[600px] bg-[#f7f7f7] p-6 rounded-2xl shadow-2xl">
         <h6 className="text-center text-[32px] font-bold mb-6 text-[#FF6F61]">
           Login
         </h6>
@@ -83,7 +85,7 @@ const Login = () => {
               value={formData.email}
               onChange={handleInputChange}
             />
-            {errors.email && <p className="error-text">{errors.email}</p>}
+            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
           </div>
           <div className="mb-6">
             <h6 className="font-medium mb-1">Password</h6>
@@ -95,13 +97,11 @@ const Login = () => {
               value={formData.password}
               onChange={handleInputChange}
             />
-            {errors.password && (
-              <div className="error-text">{errors.password}</div>
-            )}
+            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
           </div>
           <Button
             htmlType="submit"
-            className="text-base font-medium w-full h-12 bg-[#FF6F61] text-white auth-btn "
+            className="text-base font-medium w-full h-12 bg-[#FF6F61] text-white auth-btn"
             disabled={loading}
           >
             {loading ? <Spin /> : "Log in"}
@@ -109,10 +109,15 @@ const Login = () => {
         </form>
         <p className="text-center text-sm text-gray-400 mt-4">
           Don't have an account?{" "}
-          <Link to={"/auth/signup"} className="font-medium text-blue-600">
+          <Link to="/auth/signup" className="font-medium text-blue-600">
             Sign up
           </Link>
         </p>
+        <div className="flex justify-center mt-4">
+          <Link to="/auth/forgot" className="font-medium text-center text-blue-600">
+            Forgot Password?
+          </Link>
+        </div>
       </div>
     </div>
   );

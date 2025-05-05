@@ -3,7 +3,7 @@ import { Layout } from "./components";
 import Home from "./app/home";
 import Signup from "./auth/Signup";
 import Login from "./auth/Login";
-import { SendOtp } from "./auth";
+import { ForgotPassword, ResetPassword, SendOtp } from "./auth";
 import { PublicRoute, RequireAuth } from "./routes";
 
 function App() {
@@ -43,6 +43,22 @@ function App() {
       element: (
         <PublicRoute>
           <SendOtp />
+        </PublicRoute>
+      ),
+    },
+    {
+      path: "/auth/reset",
+      element: (
+        <PublicRoute>
+          <ResetPassword />
+        </PublicRoute>
+      ),
+    },
+    {
+      path: "/auth/forgot",
+      element: (
+        <PublicRoute>
+          <ForgotPassword />
         </PublicRoute>
       ),
     },

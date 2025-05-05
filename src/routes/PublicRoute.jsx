@@ -1,11 +1,12 @@
-import React from "react";
-import { Navigate } from "react-router";
+import { Navigate } from "react-router-dom";
 
 const PublicRoute = ({ children }) => {
-  const authToken = localStorage.getItem("authToken");
-  if (authToken) {
+  const isAuthenticated = localStorage.getItem('token'); 
+
+  if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
+
   return children;
 };
 
